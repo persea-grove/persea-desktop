@@ -25,16 +25,6 @@
     return Promise.reject(new Error("Tauri IPC is not available"));
   }
 
-  function escapeHtml(value) {
-    return String(value).replace(/[&<>"']/g, (c) => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#39;",
-    }[c]));
-  }
-
   function formatSize(bytes) {
     if (!bytes) return "0 B";
     const units = ["B", "KiB", "MiB", "GiB"];
@@ -232,5 +222,5 @@
         })
         .catch(() => {});
     }
-  } catch (e) { /* IPC unavailable: static empty list */ }
+  } catch { /* IPC unavailable: static empty list */ }
 })();

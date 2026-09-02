@@ -616,6 +616,10 @@ async function initNotifications() {
 /* Updates                                                            */
 /* ------------------------------------------------------------------ */
 
+/* Defined but never called (since it landed in 2de16f0). Calling it
+ * would activate the Updates section, a behavior change owned by the
+ * updates ticket, not this cleanup. */
+// eslint-disable-next-line no-unused-vars
 async function initUpdates() {
   const versionEl = document.getElementById("updates-version");
   if (versionEl) versionEl.textContent = await appVersion();

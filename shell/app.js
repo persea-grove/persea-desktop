@@ -19,15 +19,9 @@ function invoke(cmd, args = {}) {
   return Promise.reject(new Error("Tauri IPC is not available"));
 }
 
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, (c) => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    '"': "&quot;",
-    "'": "&#39;",
-  }[c]));
-}
+/* escapeHtml lives in lib/escape-html.js (single shared definition,
+ * T3); its <script> tag is included before this file on every page
+ * that loads app.js. */
 
 async function appVersion() {
   try {
@@ -41,6 +35,9 @@ async function appVersion() {
 /* Shell clipboard: tauri-plugin-clipboard-manager (write-text, shell
  * pages only; the remote instance never gets these permissions).
  * Falls back to the web clipboard API. Returns true on success. */
+/* Consumed cross-file: pairing.js calls copyText after loading this
+ * classic script (no imports yet, the shell-page contract). */
+// eslint-disable-next-line no-unused-vars
 async function copyText(text) {
   try {
     await invoke("plugin:clipboard-manager|write_text", { text });

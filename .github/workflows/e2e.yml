@@ -15,13 +15,17 @@ on:
       - '.github/workflows/e2e.yml'
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 jobs:
   e2e:
     name: e2e (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    permissions:
+      # The workflow_dispatch screenshot run opens the baseline
+      # regeneration PR; the per-PR runs here stay read-only in effect.
+      contents: write
+      pull-requests: write
     strategy:
       fail-fast: false
       matrix:
@@ -134,8 +138,14 @@ jobs:
         run: node run-specs.js
 
       - name: Open a regeneration PR
+        # The only consumer of the job-level write grants. Scoping the
+        # requested permissions to this step keeps every other step at
+        # contents: read.
         if: github.event_name == 'workflow_dispatch'
         continue-on-error: true
+        permissions:
+          contents: write
+          pull-requests: write
         uses: peter-evans/create-pull-request@v8
         with:
           add-paths: docs/screenshots

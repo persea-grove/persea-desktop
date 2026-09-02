@@ -97,7 +97,7 @@ jobs:
 
       - name: Install the WebDriver client
         working-directory: tests/e2e
-        run: npm install
+        run: npm ci
 
       - name: Install a version-matched Edge WebDriver (Windows)
         if: runner.os == 'Windows'

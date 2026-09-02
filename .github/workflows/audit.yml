@@ -86,7 +86,7 @@ jobs:
 
       - name: Install the WebDriver client
         working-directory: tests/e2e
-        run: npm install
+        run: npm ci
 
       - name: Run the full-check suite
         working-directory: tests/e2e

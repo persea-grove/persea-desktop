@@ -1,0 +1,69 @@
+name: Bug report
+description: Report a problem with Persea Desktop
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. Fill in the details below so the problem can be reproduced.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What did you expect to happen, and what happened instead?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: A minimal list of steps, starting from a fresh launch.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - instances (servers, settings)
+        - sessions (tabs, windows, pop-out)
+        - tray and notifications
+        - transfers (drag-drop, downloads)
+        - keychain and pairing
+        - kiosk and hotkeys
+        - provisioning
+        - installers and updates
+        - documentation
+        - other
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Affected OS
+      options:
+        - Linux
+        - Windows
+        - macOS
+        - multiple
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: From Settings or the About dialog, for example 1.2.0.
+      placeholder: 1.2.0
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: Console output or log lines, if any. Redact tokens and server URLs before pasting.

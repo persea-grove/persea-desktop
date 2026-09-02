@@ -302,7 +302,7 @@ impl DriveClient {
             .user_agent(concat!("persea-desktop/", env!("CARGO_PKG_VERSION")))
             .danger_accept_invalid_certs(crate::shell_config::allow_insecure_tls())
             .build()
-            .expect("reqwest client build cannot fail");
+            .expect("drive REST client build only fails on invalid TLS config or bad user agent");
         Self {
             client,
             csrf: Mutex::new(HashMap::new()),

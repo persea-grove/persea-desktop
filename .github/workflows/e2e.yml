@@ -57,7 +57,19 @@ jobs:
 
       - name: Install tauri-driver
         if: runner.os != 'macOS'
-        run: cargo install tauri-driver --locked
+        shell: bash
+        env:
+          TAURI_DRIVER_VERSION: "2.0.6"
+        run: |
+          # Compile once, then reuse: the stamp records the version the
+          # binary was built for, so a bump forces a rebuild while the
+          # normal path skips cargo install entirely.
+          mkdir -p "$HOME/.cargo/bin"
+          STAMP="$HOME/.cargo/bin/.tauri-driver-$TAURI_DRIVER_VERSION"
+          if [ ! -x "$HOME/.cargo/bin/tauri-driver" ] || [ ! -f "$STAMP" ]; then
+            cargo install tauri-driver --locked --version "$TAURI_DRIVER_VERSION"
+            touch "$STAMP"
+          fi
 
       - name: Provision the test persea server
         id: server

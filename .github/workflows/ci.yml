@@ -88,8 +88,21 @@ jobs:
         with:
           components: rustfmt, clippy
           rustflags: ""
-      - name: Install cargo-audit
-        run: cargo install cargo-audit --locked
+      - name: Install cargo-audit (prebuilt release binary)
+        run: |
+          VERSION=v0.22.2
+          # rustsec ships release binaries for cargo-audit; the pinned
+          # tarball replaces the multi-minute cargo install compile.
+          # The sha256 pins the exact artifact, so a rebuilt or tampered
+          # release cannot slip in silently.
+          curl -fsSL --retry 3 -o /tmp/cargo-audit.tgz \
+            "https://github.com/rustsec/rustsec/releases/download/cargo-audit/${VERSION}/cargo-audit-x86_64-unknown-linux-gnu-${VERSION}.tgz"
+          echo "ab28a1bdb54db4d5d8ad5981cf1f959410370b3d28250dbd35f6a44248620e39  /tmp/cargo-audit.tgz" | sha256sum -c -
+          tar -xzf /tmp/cargo-audit.tgz -C /tmp
+          mkdir -p "$HOME/.cargo/bin"
+          install -m 755 \
+            "/tmp/cargo-audit-x86_64-unknown-linux-gnu-${VERSION#v}/cargo-audit" \
+            "$HOME/.cargo/bin/cargo-audit"
       - name: Audit dependencies
         run: cargo audit
         working-directory: src-tauri

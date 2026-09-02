@@ -13,6 +13,12 @@ permissions:
   contents: read
   security-events: write
 
+# Group on ref; cancel superseded runs on PRs and other non-main refs.
+# When called as a reusable workflow the caller's concurrency applies.
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   analyze:
     name: Analyze (rust + javascript-typescript, security-extended)

@@ -1,13 +1,13 @@
 /* Unit tests for the shared escapeHtml helper (shell/lib/escape-html.js).
  *
- * Run with `npm test` (node --test, no framework). The helper is a
- * browser classic script, so the CommonJS export guard at the bottom of
- * the file makes it requireable here; the browser path never sees it.
+ * Run with `npm test` (node --test, no framework). The helper is an ES
+ * module since the vite migration (T6) and the root package is
+ * type: module, so the test imports it directly.
  */
 
-const { test } = require("node:test");
-const assert = require("node:assert");
-const { escapeHtml } = require("./escape-html.js");
+import { test } from "node:test";
+import assert from "node:assert/strict";
+import { escapeHtml } from "./escape-html.js";
 
 test("passes plain text through unchanged", () => {
   assert.strictEqual(escapeHtml("hello world"), "hello world");

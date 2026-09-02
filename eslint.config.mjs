@@ -1,64 +1,25 @@
-/* ESLint flat config for the persea-desktop shell scripts (T3).
+/* ESLint flat config for the persea-desktop shell scripts (T6).
  *
- * The shell pages load their scripts as CLASSIC scripts in webviews
- * (no bundler yet), so sourceType is "script" and the cross-file
- * contract between app.js / lib/escape-html.js and the consumer pages
- * is declared as readonly globals (see the file headers: "Runs after
- * app.js"). Recommended rules only: no formatting rules, no plugins.
- *
- * app.js and the self-contained tabstrip/transfer pages define their
- * own helpers, so they get no function globals (declaring the ones
- * they define would trip no-redeclare).
+ * Since the vite migration the shell pages load their scripts as ES
+ * MODULES (bundled by vite), so sourceType is "module" everywhere and
+ * the cross-file contract runs through explicit imports (app.js
+ * exports invoke/initTheme/appVersion/copyText/capabilityChips;
+ * lib/escape-html.js exports escapeHtml). No shared-globals table is
+ * needed anymore. Recommended rules only: no formatting rules, no
+ * plugins.
  */
 import js from "@eslint/js";
 import globals from "globals";
 
-/* Functions app.js and lib/escape-html.js expose to the pages that
- * load them afterwards (classic-script contract, not ES imports). */
-const shellSharedGlobals = {
-  invoke: "readonly",
-  escapeHtml: "readonly",
-  copyText: "readonly",
-  appVersion: "readonly",
-  capabilityChips: "readonly",
-};
-
 export default [
   {
-    // app.js defines invoke/appVersion/copyText/... itself and only
-    // consumes escapeHtml from lib/escape-html.js.
-    files: ["shell/app.js"],
+    // All shell JS is browser ES module code now (the bundler resolves
+    // the imports; eslint only needs the browser globals).
+    files: ["shell/**/*.js"],
+    ignores: ["shell/lib/escape-html.test.js"],
     languageOptions: {
       ecmaVersion: "latest",
-      sourceType: "script",
-      globals: {
-        ...globals.browser,
-        escapeHtml: "readonly",
-      },
-    },
-    rules: js.configs.recommended.rules,
-  },
-  {
-    // Consumer pages: settings.js, login.js, pairing.js call the
-    // helpers app.js defines at top level.
-    files: ["shell/settings.js", "shell/login.js", "shell/pairing.js"],
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "script",
-      globals: {
-        ...globals.browser,
-        ...shellSharedGlobals,
-      },
-    },
-    rules: js.configs.recommended.rules,
-  },
-  {
-    // Self-contained classic scripts: their helpers live inside the
-    // IIFE, nothing crosses files.
-    files: ["shell/tabstrip.js", "shell/transfer.js"],
-    languageOptions: {
-      ecmaVersion: "latest",
-      sourceType: "script",
+      sourceType: "module",
       globals: {
         ...globals.browser,
       },
@@ -66,15 +27,14 @@ export default [
     rules: js.configs.recommended.rules,
   },
   {
-    // The shared helper doubles as a CommonJS module for node --test
-    // (see the export guard at the bottom of escape-html.js), and the
-    // colocated test runs under Node.
-    files: ["shell/lib/**/*.js"],
+    // The colocated test runs under Node.
+    files: ["shell/lib/**/*.test.js"],
     languageOptions: {
-      sourceType: "commonjs",
+      sourceType: "module",
       globals: {
         ...globals.node,
       },
     },
+    rules: js.configs.recommended.rules,
   },
 ];

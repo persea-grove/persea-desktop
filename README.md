@@ -58,7 +58,7 @@ Full walkthrough: [docs/getting-started.md](docs/getting-started.md).
 | Path | Purpose |
 |------|---------|
 | `src-tauri/` | Rust app: Tauri shell, config, capabilities, icons |
-| `shell/` | Local HTML/JS pages (no bundler, plain files) |
+| `shell/` | Local HTML/JS pages (ES modules, bundled by vite into `dist/`) |
 | `docs/` | Documentation ([index](docs/README.md)) |
 | `tests/e2e/` | WebDriver end-to-end test suite |
 | `scripts/` | Dev and smoke-test helpers |

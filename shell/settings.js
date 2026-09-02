@@ -1,8 +1,12 @@
 /* Persea Desktop settings page: instances CRUD + probe display,
  * appearance (shell theme), hardware acceleration, global shortcuts,
  * updates, placeholders for later features, About.
- * Runs after app.js (invoke, initTheme, capabilityChips, copyText).
+ * ES module; imports the shared helpers explicitly (app.js exports,
+ * escapeHtml) since the vite migration.
  */
+
+import { invoke, appVersion, capabilityChips } from "./app.js";
+import { escapeHtml } from "./lib/escape-html.js";
 
 const listEl = document.getElementById("instance-list");
 const dialog = document.getElementById("instance-dialog");

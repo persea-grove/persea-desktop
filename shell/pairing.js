@@ -4,7 +4,8 @@
  * modal, the code, and the paired-token list, and drives the Tauri
  * commands: pairing_supported, pairing_start, pairing_status,
  * pairing_cancel, pairing_open_confirm_page, pairing_list_tokens,
- * pairing_revoke. Runs after app.js (invoke, escapeHtml, copyText).
+ * pairing_revoke. ES module; imports invoke and copyText from app.js
+ * and escapeHtml from lib/escape-html.js since the vite migration.
  *
  * Capability gate: when the instance probe does not report the
  * desktop_pairing capability, the pairing UI is hidden entirely and only
@@ -19,6 +20,9 @@
  * user comes back to this page, an in-flight pairing reopens the modal
  * with the live state.
  */
+
+import { invoke, copyText } from "./app.js";
+import { escapeHtml } from "./lib/escape-html.js";
 
 const UI_POLL_MS = 1000;
 

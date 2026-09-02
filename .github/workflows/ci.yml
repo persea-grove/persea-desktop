@@ -85,6 +85,29 @@ jobs:
         run: cargo test
         working-directory: src-tauri
 
+      # Activates when the shell lint ticket lands eslint.config.mjs at
+      # the repo root; until then this is a cheap no-op.
+      - name: shell lint
+        if: hashFiles('eslint.config.mjs') != ''
+        run: npm run lint
+
+      # Same deal for the shell unit-test harness; npm test is the root
+      # package.json test script once that ticket lands.
+      - name: shell test
+        if: hashFiles('eslint.config.mjs') != ''
+        run: npm test
+
+      - name: cargo-deny
+        # Activates when the meta ticket lands deny.toml; until then
+        # this is a cheap no-op.
+        if: hashFiles('deny.toml') != ''
+        shell: bash
+        run: |
+          if ! command -v cargo-deny >/dev/null 2>&1; then
+            cargo install cargo-deny --locked
+          fi
+          cargo deny check
+
   audit:
     name: cargo audit
     runs-on: ubuntu-24.04

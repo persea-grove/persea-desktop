@@ -177,7 +177,10 @@ fn selected_store(data_dir: &Path) -> Result<SelectedStore, String> {
     if guard.is_none() {
         *guard = Some(select_store(data_dir)?);
     }
-    Ok(guard.as_ref().expect("just initialized").clone())
+    Ok(guard
+        .as_ref()
+        .expect("keyring store was just initialized above")
+        .clone())
 }
 
 /// Platform store selection. Linux uses the fallback chain; macOS and

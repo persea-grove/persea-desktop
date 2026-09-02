@@ -1008,7 +1008,11 @@ async fn add_instance(
         probe: Some(outcome),
     });
     store.save().map_err(|e| e.to_string())?;
-    Ok(instance_view(store.find(url).unwrap()))
+    Ok(instance_view(
+        store
+            .find(url)
+            .expect("instance was just pushed into the store above"),
+    ))
 }
 
 #[tauri::command]
@@ -1128,7 +1132,9 @@ pub async fn cmd_instances_probe(url: String) -> Result<ProbeView, String> {
     store.save().map_err(|e| e.to_string())?;
     let inst = &store.file.instances[idx];
     let view = instance_view(inst);
-    Ok(view.probe.unwrap())
+    Ok(view
+        .probe
+        .expect("probe was just stored on the instance above"))
 }
 
 /// "Open": mark last-used and navigate the main window to the instance.

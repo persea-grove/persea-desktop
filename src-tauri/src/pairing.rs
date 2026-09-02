@@ -519,7 +519,10 @@ fn registry_handle(app: &AppHandle) -> Result<Arc<Mutex<TokenRegistry>>, String>
             dir.join(REGISTRY_FILE),
         ))));
     }
-    Ok(guard.as_ref().expect("just initialized").clone())
+    Ok(guard
+        .as_ref()
+        .expect("registry entry was just initialized above")
+        .clone())
 }
 
 fn with_registry<R>(app: &AppHandle, f: impl FnOnce(&mut TokenRegistry) -> R) -> Result<R, String> {

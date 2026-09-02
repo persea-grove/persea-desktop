@@ -8,6 +8,12 @@ on:
 permissions:
   contents: read
 
+# Group on ref; cancel superseded runs on PRs and other non-main refs.
+# When called as a reusable workflow the caller's concurrency applies.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   test:
     name: check / fmt / clippy / test (${{ matrix.os }})
@@ -17,7 +23,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
         run: |
@@ -30,11 +36,11 @@ jobs:
             libxdo-dev \
             libssl-dev \
             libdbus-1-dev
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1
         with:
           components: rustfmt, clippy
           rustflags: ""
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
         with:
           workspaces: src-tauri
       - name: fmt
@@ -79,17 +85,58 @@ jobs:
         run: cargo test
         working-directory: src-tauri
 
+      # Activates when the shell lint ticket lands eslint.config.mjs at
+      # the repo root; until then this is a cheap no-op.
+      - name: shell lint
+        if: hashFiles('eslint.config.mjs') != ''
+        run: npm run lint
+
+      # Same deal for the shell unit-test harness; npm test is the root
+      # package.json test script once that ticket lands.
+      - name: shell test
+        if: hashFiles('eslint.config.mjs') != ''
+        run: npm test
+
+      - name: cargo-deny
+        # Activates when the meta ticket lands deny.toml; until then
+        # this is a cheap no-op.
+        if: hashFiles('deny.toml') != ''
+        shell: bash
+        run: |
+          if ! command -v cargo-deny >/dev/null 2>&1; then
+            cargo install cargo-deny --locked
+          fi
+          cargo deny check
+
   audit:
     name: cargo audit
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1
         with:
           components: rustfmt, clippy
           rustflags: ""
-      - name: Install cargo-audit
-        run: cargo install cargo-audit --locked
+          # No workspace caching here: this job audits Cargo.lock with a
+          # prebuilt binary. The action's internal rust-cache defaults to
+          # the repo root, has no Cargo.toml to analyze, and hard-fails on
+          # a cache miss.
+          cache: false
+      - name: Install cargo-audit (prebuilt release binary)
+        run: |
+          VERSION=v0.22.2
+          # rustsec ships release binaries for cargo-audit; the pinned
+          # tarball replaces the multi-minute cargo install compile.
+          # The sha256 pins the exact artifact, so a rebuilt or tampered
+          # release cannot slip in silently.
+          curl -fsSL --retry 3 -o /tmp/cargo-audit.tgz \
+            "https://github.com/rustsec/rustsec/releases/download/cargo-audit/${VERSION}/cargo-audit-x86_64-unknown-linux-gnu-${VERSION}.tgz"
+          echo "ab28a1bdb54db4d5d8ad5981cf1f959410370b3d28250dbd35f6a44248620e39  /tmp/cargo-audit.tgz" | sha256sum -c -
+          tar -xzf /tmp/cargo-audit.tgz -C /tmp
+          mkdir -p "$HOME/.cargo/bin"
+          install -m 755 \
+            "/tmp/cargo-audit-x86_64-unknown-linux-gnu-${VERSION#v}/cargo-audit" \
+            "$HOME/.cargo/bin/cargo-audit"
       - name: Audit dependencies
         run: cargo audit
         working-directory: src-tauri

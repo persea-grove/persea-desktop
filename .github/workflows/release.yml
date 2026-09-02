@@ -29,7 +29,7 @@ jobs:
     outputs:
       release_id: ${{ steps.release.outputs.release_id }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - name: Verify the version bump matches the tag
         run: |
           set -euo pipefail
@@ -87,7 +87,7 @@ jobs:
               Write-Host "smoke: app alive after 15s"
               Stop-Process -Id $p.Id -Force
           - name: linux
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             args: --bundles deb,rpm,appimage
             rust_targets: ""
             binary: src-tauri/target/release/persea-desktop
@@ -135,7 +135,7 @@ jobs:
               kill "$PID" 2>/dev/null || true
               wait "$PID" 2>/dev/null || true
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
@@ -146,18 +146,18 @@ jobs:
             librsvg2-dev libssl-dev libdbus-1-dev \
             patchelf xdg-utils libfuse2 xvfb
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1
         with:
           components: rustfmt, clippy
           rustflags: ""
           target: ${{ matrix.rust_targets }}
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: src-tauri
           shared-key: release-${{ matrix.name }}
 
-      - uses: tauri-apps/tauri-action@v1
+      - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Updater signing: the private minisign key lives ONLY in the
@@ -181,7 +181,7 @@ jobs:
     needs: [build]
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Un-draft the release
         env:

@@ -15,19 +15,28 @@ on:
       - '.github/workflows/e2e.yml'
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
+
+# Group on ref; cancel superseded runs on PRs and other non-main refs.
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   e2e:
     name: e2e (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    permissions:
+      # The workflow_dispatch screenshot run opens the baseline
+      # regeneration PR; the per-PR runs here stay read-only in effect.
+      contents: write
+      pull-requests: write
     strategy:
       fail-fast: false
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
@@ -38,12 +47,12 @@ jobs:
             librsvg2-dev libxdo-dev libssl-dev libdbus-1-dev \
             xvfb openssh-server webkit2gtk-driver
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1
         with:
           components: rustfmt, clippy
           rustflags: ""
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: src-tauri
 
@@ -53,7 +62,19 @@ jobs:
 
       - name: Install tauri-driver
         if: runner.os != 'macOS'
-        run: cargo install tauri-driver --locked
+        shell: bash
+        env:
+          TAURI_DRIVER_VERSION: "2.0.6"
+        run: |
+          # Compile once, then reuse: the stamp records the version the
+          # binary was built for, so a bump forces a rebuild while the
+          # normal path skips cargo install entirely.
+          mkdir -p "$HOME/.cargo/bin"
+          STAMP="$HOME/.cargo/bin/.tauri-driver-$TAURI_DRIVER_VERSION"
+          if [ ! -x "$HOME/.cargo/bin/tauri-driver" ] || [ ! -f "$STAMP" ]; then
+            cargo install tauri-driver --locked --version "$TAURI_DRIVER_VERSION"
+            touch "$STAMP"
+          fi
 
       - name: Provision the test persea server
         id: server
@@ -76,7 +97,7 @@ jobs:
 
       - name: Install the WebDriver client
         working-directory: tests/e2e
-        run: npm install
+        run: npm ci
 
       - name: Install a version-matched Edge WebDriver (Windows)
         if: runner.os == 'Windows'
@@ -105,7 +126,7 @@ jobs:
 
       - name: Upload the driver and app logs on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: e2e-logs-${{ matrix.os }}
           path: |
@@ -134,9 +155,15 @@ jobs:
         run: node run-specs.js
 
       - name: Open a regeneration PR
+        # The only consumer of the job-level write grants. Scoping the
+        # requested permissions to this step keeps every other step at
+        # contents: read.
         if: github.event_name == 'workflow_dispatch'
         continue-on-error: true
-        uses: peter-evans/create-pull-request@v8
+        permissions:
+          contents: write
+          pull-requests: write
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
           add-paths: docs/screenshots
           branch: screenshots/regen

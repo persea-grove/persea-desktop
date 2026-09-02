@@ -9,9 +9,10 @@ and administrators; this one is written for developers.
 | Path | What it is |
 |------|------------|
 | `src-tauri/` | The Rust app: Tauri 2 shell, backend modules, capabilities, icons |
-| `shell/` | The app's own HTML/JS pages (welcome, settings, pairing, transfer, tab strip). Plain files, no bundler, no build step |
+| `shell/` | The app's own HTML/JS pages (welcome, settings, pairing, transfer, tab strip). ES modules bundled by vite (`npm run build` → `dist/`) |
 | `tests/e2e/` | The WebDriver end-to-end suite (see below) |
 | `scripts/` | Dev and smoke-test helpers |
+| `vite.config.mjs` | The shell bundle: one rollup input per shell page |
 | `.github/workflows/` | CI, E2E, release and beta workflows |
 
 The Rust modules under `src-tauri/src/`:
@@ -80,9 +81,11 @@ WKWebView engine ships with macOS.
 
 ## Run the app
 
-The `shell/` frontend is plain HTML with no build step, and
-`tauri.conf.json` has no `devUrl`, so `tauri dev` serves the shell
-assets itself: nothing to start beforehand.
+The `shell/` frontend is a vite bundle. `tauri.conf.json` has no
+`devUrl`, so `tauri dev` runs `npm install && npm run build` first
+(`beforeDevCommand`, waited on) and serves the fresh `dist/` through
+its built-in dev server: nothing else to start beforehand. The build
+step needs node and npm on the PATH.
 
 ```sh
 cargo tauri dev
@@ -90,7 +93,9 @@ cargo tauri dev
 
 `scripts/dev.sh` is a thin wrapper that validates `PERSEA_URL` and
 runs `cargo tauri dev` (falling back to plain `cargo run` when the
-Tauri CLI is missing). Point it at a local persea server:
+Tauri CLI is missing; the fallback serves whatever `dist/` holds, so
+run `npm install && npm run build` once first). Point it at a local
+persea server:
 
 ```sh
 PERSEA_URL=http://127.0.0.1:8089 ./scripts/dev.sh
@@ -117,6 +122,14 @@ cargo fmt --all --check
 cargo audit         # dependency vulnerability scan
 ```
 
+The shell has its own checks from the repo root:
+
+```sh
+npm install         # once, after a fresh clone
+npm run lint        # eslint over shell/
+npm test            # node --test for the shared helpers
+```
+
 `scripts/smoke.sh` builds the binary and checks that the window
 process stays alive. It needs an X/Wayland display; use `xvfb-run`
 headless.
@@ -126,10 +139,21 @@ headless.
 The suite in `tests/e2e/` drives the real app binary through
 tauri-driver (WebDriver for Tauri). Playwright cannot drive
 tauri-driver: Playwright speaks CDP-style transports, not WebDriver.
+The CI e2e workflow and the docker audit build with plain
+`cargo build` and no npm step; a fresh checkout there needs
+`npm install && npm run build` before the cargo build, because the
+compile-time asset embed reads `dist/`. The e2e workflow and the
+audit entrypoint do not yet run those steps (tracked for follow-up).
+
+The suite in `tests/e2e/` drives the real app binary through
+tauri-driver (WebDriver for Tauri). Playwright cannot drive
+tauri-driver: Playwright speaks CDP-style transports, not WebDriver.
 Read `tests/e2e/README.md` for the full details; the short version:
 
 ```sh
-# 1. Build the app (needs the platform webview dev libraries):
+# 1. Build the app (needs the platform webview dev libraries; the
+#    compile-time asset embed reads dist/, so build the shell first):
+npm install && npm run build
 cargo tauri build
 # 2. Install tauri-driver:
 cargo install tauri-driver

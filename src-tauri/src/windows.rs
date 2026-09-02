@@ -420,11 +420,12 @@ impl TabState {
                 effects.push(Effect::FocusViewport);
             }
             PopMode::Window => {
+                let tab = self.tabs.last().expect("session tab was just pushed above");
                 effects.push(Effect::OpenSessionWindow {
                     label: session_window_label(&id),
                     url: url.to_string(),
-                    title: self.tabs.last().unwrap().title.clone(),
-                    instance: self.tabs.last().unwrap().instance.clone(),
+                    title: tab.title.clone(),
+                    instance: tab.instance.clone(),
                 });
                 effects.push(Effect::FocusWindow(session_window_label(&id)));
             }

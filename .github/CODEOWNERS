@@ -1,0 +1,4 @@
+# Default owner for everything: the repository admin. The org (@persea-grove)
+# has no teams, and organizations cannot own code, so the owner is the user
+# account that administers the repo.
+* @BarbellDwarf

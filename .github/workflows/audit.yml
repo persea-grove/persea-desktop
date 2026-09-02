@@ -70,7 +70,13 @@ jobs:
 
       - name: Provision the test persea server
         id: server
+        env:
+          RUSTUP_TOOLCHAIN: stable
         run: |
+          # Pinned server ref 43215ab locks sqlx 0.9.0 (MSRV 1.94), so
+          # the server build must use the runner's stable toolchain (env
+          # above) while the desktop stays on the repo pin
+          # (persea-desktop#122).
           git clone --no-checkout https://github.com/persea-grove/persea.git /tmp/persea
           git -C /tmp/persea checkout "${PERSEA_E2E_SERVER_REF:-43215ab}"
           "$GITHUB_WORKSPACE/tests/e2e/provision-server.sh" /tmp/persea 8099 | tee /tmp/provision.env

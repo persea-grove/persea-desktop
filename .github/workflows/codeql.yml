@@ -4,6 +4,10 @@ on:
     branches: [main]
   pull_request:
   workflow_call:
+  schedule:
+    # Weekly, Sunday 09:07 UTC (off the top of the hour to avoid the
+    # scheduled-run thundering herd).
+    - cron: '7 9 * * 0'
 
 permissions:
   contents: read

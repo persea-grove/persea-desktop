@@ -1,0 +1,51 @@
+name: Stale
+
+# Weekly sweep: mark issues and PRs stale after 30 days without
+# activity, close them 14 days later if still silent. Issues closed by
+# the bot are labelled 'planned' rather than 'not_planned' (they can
+# return to the backlog). Wayfinder maps and tasks stay exempt, as does
+# anything pinned.
+on:
+  schedule:
+    # Weekly, Sunday 11:11 UTC (off the top of the hour to avoid the
+    # scheduled-run thundering herd).
+    - cron: '11 11 * * 0'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+concurrency:
+  group: stale
+  cancel-in-progress: false
+
+jobs:
+  stale:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/stale@1e223db275d687790206a7acac4d1a11bd6fe629 # v10
+        with:
+          # One sweep covers both issues and PRs.
+          days-before-stale: 30
+          days-before-close: 14
+          stale-label: stale
+          exempt-issue-labels: 'wayfinder:map,wayfinder:task,pinned'
+          exempt-pr-labels: 'wayfinder:map,wayfinder:task,pinned'
+          exempt-all-assignees: false
+          operations-per-run: 60
+          stale-issue-message: |
+            This issue has been inactive for 30 days. It will close in
+            14 days unless there is further activity. Remove the `stale`
+            label or comment to keep it open.
+          close-issue-message: |
+            Closed after 14 days of inactivity. Reopen if it is still
+            relevant.
+          stale-pr-message: |
+            This pull request has been inactive for 30 days. It will
+            close in 14 days unless there is further activity. Remove
+            the `stale` label or push to keep it open.
+          close-pr-message: |
+            Closed after 14 days of inactivity. Reopen if it is still
+            relevant.
+          close-issue-reason: planned

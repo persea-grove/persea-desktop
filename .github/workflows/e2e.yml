@@ -56,6 +56,12 @@ jobs:
         with:
           workspaces: src-tauri
 
+      # The tauri codegen embeds the shell bundle (frontendDist) at compile
+      # time; the package.json guard skips pre-vite-migration branches.
+      - name: Build the shell bundle
+        if: ${{ hashFiles('package.json') != '' }}
+        run: npm ci && npm run build
+
       - name: Build the app
         working-directory: src-tauri
         run: cargo build

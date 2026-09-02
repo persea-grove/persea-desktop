@@ -37,6 +37,13 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+      # The tauri codegen embeds the shell bundle (frontendDist) at compile
+      # time, so any cargo invocation needs dist/ to exist. Guarded on the
+      # root package.json: branches without the vite migration (no
+      # package.json) build against the raw shell/ directory and skip this.
+      - name: Build the shell bundle
+        if: ${{ hashFiles('package.json') != '' }}
+        run: npm ci && npm run build
       - name: fmt
         run: cargo fmt --all --check
         working-directory: src-tauri

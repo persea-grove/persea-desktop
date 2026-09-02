@@ -37,6 +37,13 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           workspaces: src-tauri
+      # The tauri codegen embeds the shell bundle (frontendDist) at compile
+      # time, so any cargo invocation needs dist/ to exist. Guarded on the
+      # root package.json: branches without the vite migration (no
+      # package.json) build against the raw shell/ directory and skip this.
+      - name: Build the shell bundle
+        if: ${{ hashFiles('package.json') != '' }}
+        run: npm ci && npm run build
       - name: fmt
         run: cargo fmt --all --check
         working-directory: src-tauri
@@ -46,34 +53,6 @@ jobs:
       - name: test (build only)
         run: cargo test --no-run
         working-directory: src-tauri
-
-      - name: Give the windows test binaries a comctl32 v6 manifest
-        if: runner.os == 'Windows'
-        working-directory: src-tauri
-        shell: pwsh
-        run: |
-          # The lib test binary imports comctl32!TaskDialogIndirect, which
-          # exists only in comctl32 v6; without a manifest the loader binds
-          # System32's v5 and the exe dies with STATUS_ENTRYPOINT_NOT_FOUND.
-          # The app binary embeds its manifest via tauri_build — test
-          # binaries have none, so drop an external one beside each. This
-          # must happen AFTER the link above: cargo's relink replaces the
-          # exes and any manifest written before it is stale.
-          $manifest = @'
-          <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-          <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
-            <dependency>
-              <dependentAssembly>
-                <assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0" processorArchitecture="*" publicKeyToken="6595b64144ccf1df" language="*"/>
-              </dependentAssembly>
-            </dependency>
-          </assembly>
-          '@
-          Get-ChildItem target/debug/deps/*.exe | ForEach-Object {
-            # The XML declaration must be the first bytes of the file;
-            # the here-string carries YAML indentation, so trim it.
-            Set-Content -Path "$($_.FullName).manifest" -Value $manifest.TrimStart()
-          }
 
       - name: test
         run: cargo test

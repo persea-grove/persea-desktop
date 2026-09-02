@@ -29,7 +29,7 @@ Commit messages follow Conventional Commits: a type prefix such as `fix:`, `feat
 
 ## Signed commits
 
-The MainProtection ruleset on `main` requires signed commits, so unsigned commits are rejected on push. Configure signing once, with SSH or GPG.
+Commit signing is recommended but no longer enforced: the `required_signatures` rule was removed from the MainProtection ruleset in September 2026. Signed commits keep authorship verifiable, so configure signing once, with SSH or GPG.
 
 SSH signing:
 
@@ -52,7 +52,7 @@ Add the public key on GitHub under the same settings page. GitHub documents both
 
 ## Ruleset bypass policy
 
-MainProtection protects the `main` branch: signed commits, linear history, and required CodeQL results. Bypassing the ruleset is limited to the repository admin role and to emergencies, for example an incident or a release blocker.
+MainProtection protects the `main` branch: linear history, pull-request-only changes, and required CodeQL results. Bypassing the ruleset is limited to the repository admin role and to emergencies, for example an incident or a release blocker.
 
 Every bypass use gets a comment on the related issue explaining why the bypass was needed and which checks it skipped. The comment is part of the procedure.
 

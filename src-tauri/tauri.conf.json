@@ -4,7 +4,12 @@
   "version": "1.1.1",
   "identifier": "dev.persea.desktop",
   "build": {
-    "frontendDist": "../shell"
+    "beforeDevCommand": {
+      "script": "npm install && npm run build",
+      "wait": true
+    },
+    "beforeBuildCommand": "npm ci && npm run build",
+    "frontendDist": "../dist"
   },
   "app": {
     "withGlobalTauri": true,

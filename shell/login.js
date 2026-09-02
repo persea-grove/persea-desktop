@@ -8,12 +8,15 @@
  * token-page parse) and stores the scoped token in the OS keychain. On
  * success the page reports the token's remaining validity; classified
  * failures (wrong credentials, locked account, MFA required) render as
- * errors. Runs after app.js (invoke, escapeHtml).
+ * errors. ES module; imports invoke from app.js since the vite
+ * migration.
  *
  * Instance selection: ?url=<instance url> opens the page for a specific
  * instance (the compliance-mode trigger links this way); without the
  * parameter the default instance is used.
  */
+
+import { invoke } from "./app.js";
 
 function queryInstanceUrl() {
   return new URLSearchParams(window.location.search).get("url");

@@ -1,7 +1,13 @@
 /* Persea Desktop shell chrome (D02).
  *
- * Shared by every shell page (index.html, settings.html). Provides:
- *  - invoke(): Tauri IPC without the npm API layer
+ * Loaded by every shell page with chrome (index.html, settings.html,
+ * login.html, pairing.html) as an ES module. Exports the helpers the
+ * page scripts import: invoke, initTheme, appVersion, copyText,
+ * capabilityChips. initTheme/initChrome/initWelcomePage run on import;
+ * the exports exist for the consumers.
+ *
+ * Provides:
+ *  - invoke(): Tauri IPC (@tauri-apps/api/core)
  *  - initTheme(): shell theme system (light / dark / auto)
  *  - appVersion(): version from the app binary
  *  - copyText(): shell clipboard helper (plugin, shell pages only)
@@ -9,21 +15,17 @@
  *  - first-run welcome flow (index.html only, guarded by element presence)
  */
 
+import { invoke } from "@tauri-apps/api/core";
+import { escapeHtml } from "./lib/escape-html.js";
+
 const APP_VERSION_FALLBACK = "1.0.0";
 
-function invoke(cmd, args = {}) {
-  const tauri = window.__TAURI_INTERNALS__;
-  if (tauri && typeof tauri.invoke === "function") {
-    return tauri.invoke(cmd, args);
-  }
-  return Promise.reject(new Error("Tauri IPC is not available"));
-}
+export { invoke };
 
-/* escapeHtml lives in lib/escape-html.js (single shared definition,
- * T3); its <script> tag is included before this file on every page
- * that loads app.js. */
+/* escapeHtml comes from lib/escape-html.js (single shared definition,
+ * T3); every consumer imports it directly since the vite migration. */
 
-async function appVersion() {
+export async function appVersion() {
   try {
     const v = await invoke("cmd_app_version");
     return typeof v === "string" && v ? v : APP_VERSION_FALLBACK;
@@ -35,10 +37,7 @@ async function appVersion() {
 /* Shell clipboard: tauri-plugin-clipboard-manager (write-text, shell
  * pages only; the remote instance never gets these permissions).
  * Falls back to the web clipboard API. Returns true on success. */
-/* Consumed cross-file: pairing.js calls copyText after loading this
- * classic script (no imports yet, the shell-page contract). */
-// eslint-disable-next-line no-unused-vars
-async function copyText(text) {
+export async function copyText(text) {
   try {
     await invoke("plugin:clipboard-manager|write_text", { text });
     return true;
@@ -54,7 +53,7 @@ async function copyText(text) {
 
 /* Shell theme system: token stylesheet in settings.css. "auto" follows
  * the OS via prefers-color-scheme; explicit light/dark pin a class. */
-function initTheme() {
+export function initTheme() {
   const media = window.matchMedia("(prefers-color-scheme: light)");
   let setting = "auto";
 
@@ -150,7 +149,7 @@ function renderProbeSummary(container, inst) {
   });
 }
 
-function capabilityChips(capabilities) {
+export function capabilityChips(capabilities) {
   const labels = {
     drive_api: "drive API",
     drive_upload: "drive upload",

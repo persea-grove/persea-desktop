@@ -32,7 +32,7 @@ jobs:
         ports:
           - 4822:4822
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install Linux system dependencies
         run: |
@@ -42,7 +42,7 @@ jobs:
             librsvg2-dev libxdo-dev libssl-dev libdbus-1-dev \
             xvfb openssh-server webkit2gtk-driver ldap-utils
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1
         with:
           components: rustfmt, clippy
           rustflags: ""
@@ -51,7 +51,7 @@ jobs:
         working-directory: src-tauri
         run: cargo build
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           # tauri-driver compiles from source (~3min); cache the cargo
           # bin dir keyed on the pinned version so the compile runs only
@@ -104,7 +104,7 @@ jobs:
 
       - name: Upload the audit screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: audit-screenshots
           path: audit-shots

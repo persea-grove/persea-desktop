@@ -36,7 +36,7 @@ jobs:
       matrix:
         os: [ubuntu-24.04, windows-latest, macos-latest]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
@@ -47,12 +47,12 @@ jobs:
             librsvg2-dev libxdo-dev libssl-dev libdbus-1-dev \
             xvfb openssh-server webkit2gtk-driver
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions-rust-lang/setup-rust-toolchain@166cdcfd11aee3cb47222f9ddb555ce30ddb9659 # v1
         with:
           components: rustfmt, clippy
           rustflags: ""
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
         with:
           workspaces: src-tauri
 
@@ -126,7 +126,7 @@ jobs:
 
       - name: Upload the driver and app logs on failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: e2e-logs-${{ matrix.os }}
           path: |
@@ -163,7 +163,7 @@ jobs:
         permissions:
           contents: write
           pull-requests: write
-        uses: peter-evans/create-pull-request@v8
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
         with:
           add-paths: docs/screenshots
           branch: screenshots/regen

@@ -40,7 +40,7 @@ jobs:
         with:
           components: rustfmt, clippy
           rustflags: ""
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - uses: Swatinem/rust-cache@49a0bdc70d2e1b713ca9e2869b211fcce03d3c1c # v2
         with:
           workspaces: src-tauri
       - name: fmt
@@ -117,6 +117,11 @@ jobs:
         with:
           components: rustfmt, clippy
           rustflags: ""
+          # No workspace caching here: this job audits Cargo.lock with a
+          # prebuilt binary. The action's internal rust-cache defaults to
+          # the repo root, has no Cargo.toml to analyze, and hard-fails on
+          # a cache miss.
+          cache: false
       - name: Install cargo-audit (prebuilt release binary)
         run: |
           VERSION=v0.22.2

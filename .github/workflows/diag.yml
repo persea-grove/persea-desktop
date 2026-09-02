@@ -120,3 +120,41 @@ jobs:
           '@
           Set-Content -Path import_audit.py -Value $py
           python import_audit.py
+
+  # Linux diag: reproduce the audit.yml "Provision the test persea server"
+  # step with full stderr (provision-server.sh hides cargo output) and
+  # runner-environment details. Temporary: remove once the provisioning
+  # failure is diagnosed.
+  diag-linux:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          components: rustfmt, clippy
+          rustflags: ""
+
+      - name: Runner environment
+        run: |
+          echo "=== toolchains ==="
+          which -a cargo rustc || true
+          rustc -V; cargo -V
+          rustup toolchain list || true
+          echo "RUSTUP_TOOLCHAIN=${RUSTUP_TOOLCHAIN:-unset}"
+          echo "=== resources ==="
+          df -h / /tmp /mnt 2>/dev/null || df -h
+          free -h
+          nproc
+
+      - name: Clone the server and build it with visible stderr
+        run: |
+          git clone --no-checkout https://github.com/persea-grove/persea.git /tmp/persea-probe
+          git -C /tmp/persea-probe checkout 43215ab
+          df -h /tmp
+          set +e
+          cargo build --release --manifest-path /tmp/persea-probe/Cargo.toml 2>&1 | tail -60
+          code=$?
+          echo "cargo build exit code: $code"
+          df -h /tmp
+          exit 0

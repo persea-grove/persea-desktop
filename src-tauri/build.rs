@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 fn main() {
     // App-defined commands declared in the manifest are REMOVED from the
@@ -66,7 +66,58 @@ fn main() {
             "cmd_token_acquire",
         ]));
     populate_remote_urls();
+    // On windows-msvc the comctl32 v6 manifest is embedded by the linker
+    // (/MANIFEST:EMBED) into every target of this package, the lib unit
+    // test harness included: its comctl32!TaskDialogIndirect import binds
+    // System32's v5 without it and the exe dies with
+    // STATUS_ENTRYPOINT_NOT_FOUND. tauri-build's RC embed would put a
+    // second manifest on the app binary and collide with the linker's, so
+    // suppress it. Non-windows and non-msvc toolchains (gnu) get neither
+    // link args nor the manifest file and keep the tauri_build default.
+    let mut attributes = attributes;
+    if windows_msvc_target() {
+        embed_windows_manifest();
+        attributes = attributes
+            .windows_attributes(tauri_build::WindowsAttributes::new_without_app_manifest());
+    }
     tauri_build::try_build(attributes).expect("tauri-build with app manifest failed");
+}
+
+/// True when the target being compiled is windows with the msvc toolchain.
+fn windows_msvc_target() -> bool {
+    std::env::var("CARGO_CFG_TARGET_OS").as_deref() == Ok("windows")
+        && std::env::var("CARGO_CFG_TARGET_ENV").as_deref() == Ok("msvc")
+}
+
+/// Write the comctl32 v6 app manifest to OUT_DIR and direct the linker to
+/// embed it (`cargo:rustc-link-arg` reaches every target of the package,
+/// including the lib test harness that `cargo:rustc-link-arg-tests` never
+/// does, cargo#10937). The XML is byte-identical to tauri-build's default
+/// windows-app-manifest.xml, so the app binary keeps the exact manifest it
+/// had when tauri-build embedded it via the resource file.
+fn embed_windows_manifest() {
+    const APP_MANIFEST: &str = r#"<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+  <dependency>
+    <dependentAssembly>
+      <assemblyIdentity
+        type="win32"
+        name="Microsoft.Windows.Common-Controls"
+        version="6.0.0.0"
+        processorArchitecture="*"
+        publicKeyToken="6595b64144ccf1df"
+        language="*"
+      />
+    </dependentAssembly>
+  </dependency>
+</assembly>"#;
+    let out_dir = PathBuf::from(std::env::var("OUT_DIR").expect("OUT_DIR must be set"));
+    let manifest_path = out_dir.join("windows-app-manifest.xml");
+    fs::write(&manifest_path, APP_MANIFEST).expect("cannot write windows-app-manifest.xml");
+    println!("cargo:rustc-link-arg=/MANIFEST:EMBED");
+    println!(
+        "cargo:rustc-link-arg=/MANIFESTINPUT:{}",
+        manifest_path.display()
+    );
 }
 
 /// Populate the remote capability's `remote.urls` from the build-time

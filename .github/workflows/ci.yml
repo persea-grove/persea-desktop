@@ -102,15 +102,14 @@ jobs:
         run: npm test
 
       - name: cargo-deny
-        # Activates when the meta ticket lands deny.toml; until then
-        # this is a cheap no-op.
+        # deny.toml lives at the repo root; the manifest is under src-tauri.
         if: hashFiles('deny.toml') != ''
         shell: bash
         run: |
           if ! command -v cargo-deny >/dev/null 2>&1; then
             cargo install cargo-deny --locked
           fi
-          cargo deny check
+          cargo deny --manifest-path src-tauri/Cargo.toml check
 
   audit:
     name: cargo audit

@@ -45,6 +45,8 @@ jobs:
         with:
           languages: rust,javascript-typescript
           queries: security-extended
+          # Rust has no autobuild; the next step is the build CodeQL traces.
+          build-mode: manual
       - name: Build (manual CodeQL build step)
         run: cargo build --manifest-path src-tauri/Cargo.toml
       - name: Perform CodeQL Analysis

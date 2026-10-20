@@ -93,16 +93,16 @@ jobs:
             WS="$(cygpath -u "$GITHUB_WORKSPACE")"
           fi
           cd /tmp
-          # Pinned server ref: persea main was mid review-stack on
-          # 2026-08-16 and its e2e provisioning was broken (binary builds
-          # but never serves /setup). PERSEA_E2E_SERVER_REF overrides;
-          # unpin when the server main provisions cleanly again. A full
-          # clone is fine: the server history was collapsed at v1.0.0.
-          # The pinned ref locks sqlx 0.9.0 (MSRV 1.94), so the server
-          # build must use the runner's stable toolchain (env above)
-          # while the desktop stays on the repo pin (persea-desktop#122).
+          # Track the server release the desktop release pairs with. The
+          # old 43215ab pin predates the /api/auth/status CSRF cookie
+          # (persea#116), so device pairing failed its bootstrap on every
+          # runner. PERSEA_E2E_SERVER_REF overrides. A full clone is fine:
+          # the server history was collapsed at v1.0.0. The server pins
+          # sqlx 0.9.0 (MSRV 1.94), so its build must use the runner's
+          # stable toolchain (env above) while the desktop stays on the
+          # repo pin (persea-desktop#122).
           git clone --no-checkout https://github.com/persea-grove/persea.git
-          git -C persea checkout "${PERSEA_E2E_SERVER_REF:-43215ab}"
+          git -C persea checkout "${PERSEA_E2E_SERVER_REF:-release/v1.2.0}"
           "$WS/tests/e2e/provision-server.sh" /tmp/persea 8099 | tee /tmp/provision.env
           grep -E "^PERSEA_E2E" /tmp/provision.env >> "$GITHUB_ENV"
 

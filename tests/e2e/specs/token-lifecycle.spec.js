@@ -44,11 +44,19 @@ async function bannerCounts(driver) {
 // re-runs the banner logic against the latest cached probe, so a probe
 // landing mid-poll is picked up on the next pass.
 async function pollBanners(driver, pred, timeoutMs) {
+  const { until, By } = require("selenium-webdriver");
   const deadline = Date.now() + timeoutMs;
   let last = null;
   while (Date.now() < deadline) {
     await driver.get(`${SHELL_ORIGIN}/settings.html`);
     await waitForText(driver, "Instances", 10000);
+    // The settings page renders its rows asynchronously after the
+    // "Instances" heading appears; reading the banners too early sees
+    // no row at all. Wait for the row (or the empty state) first.
+    await driver.wait(
+      until.elementLocated(By.css(".instance-row, #instance-list .empty-state")),
+      10000,
+    );
     const counts = await bannerCounts(driver);
     if (counts && pred(counts)) return counts;
     last = counts;
@@ -166,7 +174,12 @@ module.exports = async function () {
   // A fresh app probes at startup with the revoked token; the probe's
   // auth failure must surface the re-login offer.
   driver = await newSession();
-  await pollBanners(driver, (c) => c.login > 0 || c.renew > 0, 30000);
-  console.log("token-lifecycle: revocation surfaced the re-login offer");
-  await quietQuit(driver);
+  try {
+    await pollBanners(driver, (c) => c.login > 0 || c.renew > 0, 30000);
+    console.log("token-lifecycle: revocation surfaced the re-login offer");
+  } finally {
+    // A failed poll must not leak the WebDriver session: WebKit caps
+    // concurrent sessions, and the leak breaks every later spec.
+    await quietQuit(driver);
+  }
 };

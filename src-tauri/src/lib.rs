@@ -225,7 +225,7 @@ mod tests {
         // so the check locks the identity, not a specific release number.
         assert_eq!(cfg.version, env!("CARGO_PKG_VERSION"));
         assert_eq!(cfg.identifier, "dev.persea.desktop");
-        assert_eq!(cfg.build.frontend_dist, "../shell");
+        assert_eq!(cfg.build.frontend_dist, "../dist");
     }
 
     #[test]

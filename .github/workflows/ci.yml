@@ -135,7 +135,7 @@ jobs:
           tar -xzf /tmp/cargo-audit.tgz -C /tmp
           mkdir -p "$HOME/.cargo/bin"
           install -m 755 \
-            "/tmp/cargo-audit-x86_64-unknown-linux-gnu-${VERSION#v}/cargo-audit" \
+            "/tmp/cargo-audit-x86_64-unknown-linux-gnu-${VERSION}/cargo-audit" \
             "$HOME/.cargo/bin/cargo-audit"
       - name: Audit dependencies
         run: cargo audit

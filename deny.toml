@@ -11,14 +11,6 @@ ignore = [
     "RUSTSEC-2026-0367",
     "RUSTSEC-2026-0368",
     "RUSTSEC-2026-0369",
-    # Fixed by the dependency layer above this one (see #143): rustls, its
-    # platform verifier, and the TLS stack.
-    "RUSTSEC-2026-0285",
-    "RUSTSEC-2026-0346",
-    "RUSTSEC-2026-0348",
-    "RUSTSEC-2026-0349",
-    "RUSTSEC-2026-0382",
-    "RUSTSEC-2026-0383",
     # Unmaintained, no safe upgrade: brought in transitively by tauri.
     "RUSTSEC-2025-0075",
     "RUSTSEC-2025-0080",

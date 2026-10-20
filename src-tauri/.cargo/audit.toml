@@ -1,0 +1,11 @@
+# cargo-audit reads this file when run from src-tauri (the CI audit job's
+# working directory).
+[advisories]
+ignore = [
+  # zip 4 via tauri-plugin-updater: extraction only ever runs on an archive
+  # whose Ed25519 signature verified against our own release key. The plugin
+  # pins zip ^4; see persea-grove/persea-desktop#142 for the removal condition.
+  "RUSTSEC-2026-0367",
+  "RUSTSEC-2026-0368",
+  "RUSTSEC-2026-0369",
+]

@@ -39,6 +39,7 @@ recording_path = "$REC"
 drive_path = "$DRV"
 site_title = "Persea E2E"
 rate_limit = false
+static_path = "$PERSEA_REPO/static"
 
 [tls]
 secure_cookies = false

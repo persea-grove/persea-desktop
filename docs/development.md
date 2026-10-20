@@ -139,15 +139,6 @@ headless.
 The suite in `tests/e2e/` drives the real app binary through
 tauri-driver (WebDriver for Tauri). Playwright cannot drive
 tauri-driver: Playwright speaks CDP-style transports, not WebDriver.
-The CI e2e workflow and the docker audit build with plain
-`cargo build` and no npm step; a fresh checkout there needs
-`npm install && npm run build` before the cargo build, because the
-compile-time asset embed reads `dist/`. The e2e workflow and the
-audit entrypoint do not yet run those steps (tracked for follow-up).
-
-The suite in `tests/e2e/` drives the real app binary through
-tauri-driver (WebDriver for Tauri). Playwright cannot drive
-tauri-driver: Playwright speaks CDP-style transports, not WebDriver.
 Read `tests/e2e/README.md` for the full details; the short version:
 
 ```sh

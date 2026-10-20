@@ -2,11 +2,9 @@
 // renders the Updates section (title, version line, channel note, the
 // "Check for updates" action) and the updater command surface answers.
 //
-// The version span stays empty today: initUpdates in shell/settings.js
-// fills it from cmd_app_version, and the page's init block never calls
-// initUpdates (known bug persea-desktop#123). The spec asserts the
-// static section chrome that renders now, and checks the version
-// source through cmd_app_version instead.
+// The version span is filled at startup: initUpdates in
+// shell/settings.js calls cmd_app_version and writes the result, so
+// the spec waits for non-empty text and checks the command source too.
 //
 // The live update check runs against the real release feed: the
 // updater endpoints are compile-time config
@@ -48,10 +46,15 @@ module.exports = async function () {
     await driver.wait(until.elementLocated(By.id("btn-check-updates")), 10000);
     await waitForText(driver, "Check for updates");
 
-    // The version line renders ("Version " plus its span). The span's
-    // fill is initUpdates's job, which is not wired yet
-    // (persea-desktop#123), so only the element is asserted here.
+    // The version line renders ("Version " plus its span). initUpdates
+    // fills the span from cmd_app_version at startup, so require text.
     await driver.wait(until.elementLocated(By.id("updates-version")), 10000);
+    await driver.wait(async () => {
+      const text = await driver.executeScript(
+        "return document.getElementById('updates-version').textContent.trim()",
+      );
+      return text !== "";
+    }, 10000);
 
     // The channel note is static markup ("Channel: stable." plus the
     // beta link) and renders without any wiring.
@@ -60,8 +63,8 @@ module.exports = async function () {
     // Rest state: the status note is empty (no check has run) and the
     // "Download & restart" action is hidden (it only appears when a
     // check finds an update). Both are the markup defaults today and
-    // stay true once persea-desktop#123 wires initUpdates, which fills
-    // the note only in response to a check.
+    // stay true because initUpdates only fills the note in response to
+    // a check.
     const noteEmpty = await driver.executeScript(
       "return document.getElementById('updates-note').textContent === ''",
     );

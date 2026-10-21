@@ -47,11 +47,16 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          # --cleanup-tag fails when the tag ref is already gone, but the
+          # release itself is removed, so the error is expected here.
           gh release delete beta --yes --cleanup-tag >/dev/null 2>&1 || true
           gh release create beta --target "$GITHUB_SHA" --draft --prerelease \
             --title "Persea Desktop beta" \
             --notes "Rolling beta build of $GITHUB_REF_NAME ($GITHUB_SHA). See docs/beta.md."
-          RELEASE_ID=$(gh api "repos/$GITHUB_REPOSITORY/releases/tags/beta" --jq .id)
+          # A draft release has no git tag yet, so the by-tag lookup returns
+          # 404. Read the id from the release list instead.
+          RELEASE_ID=$(gh api "repos/$GITHUB_REPOSITORY/releases" \
+            --jq 'map(select(.tag_name == "beta"))[0].id')
           VERSION=$(jq -r .version src-tauri/tauri.conf.json)
           echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
           echo "beta_version=${VERSION}-beta.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
@@ -188,4 +193,11 @@ jobs:
       - name: Un-draft the beta pre-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release edit beta --draft=false
+        # A draft release has no git tag, so `gh release edit beta` cannot
+        # find it. Publish it by id instead.
+        run: |
+          set -euo pipefail
+          RELEASE_ID=$(gh api "repos/$GITHUB_REPOSITORY/releases" \
+            --jq 'map(select(.tag_name == "beta"))[0].id')
+          gh api --method PATCH "repos/$GITHUB_REPOSITORY/releases/$RELEASE_ID" \
+            -F draft=false >/dev/null

@@ -13,6 +13,10 @@ on:
 
 permissions:
   contents: write
+  # codeql.yml runs as a reusable workflow and needs security-events to
+  # upload its analysis. A called workflow cannot elevate permissions the
+  # caller did not grant, so the caller has to hold them (persea-desktop#124).
+  security-events: write
 
 concurrency:
   group: beta-release

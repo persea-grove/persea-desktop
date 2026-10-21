@@ -53,7 +53,9 @@ servers and pairing survive.
 Two channels exist:
 
 - **Stable**: the Releases page. Version numbers like `1.0.0`.
-- **Beta**: the beta pre-release, versioned `1.0.0-beta.<run number>`.
+- **Beta**: the beta pre-release, versioned with a plain number counted
+  up from the release line (a `1.0.0` release with run number 42
+  produces `1.0.42`).
   Beta installers come from the same download page. The beta release
   is rebuilt frequently and its download links are only valid between
   builds.

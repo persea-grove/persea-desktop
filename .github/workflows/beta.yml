@@ -59,7 +59,16 @@ jobs:
             --jq 'map(select(.tag_name == "beta"))[0].id')
           VERSION=$(jq -r .version src-tauri/tauri.conf.json)
           echo "release_id=$RELEASE_ID" >> "$GITHUB_OUTPUT"
-          echo "beta_version=${VERSION}-beta.${GITHUB_RUN_NUMBER}" >> "$GITHUB_OUTPUT"
+          # Beta versions are plain numbers counted up from the release
+          # line, not semver pre-releases: the AppImage bundler rejects a
+          # hyphen outright and the MSI bundler rejects non-numeric
+          # pre-release or build metadata. Each run bumps the patch number
+          # past the release, so every beta is newer than the stable build
+          # it replaces and the updater offers the next one.
+          #   1.1.2 base + run 4 -> 1.1.6
+          BASE_PATCH=$(printf '%s' "$VERSION" | cut -d. -f3)
+          BETA_PATCH=$((BASE_PATCH + GITHUB_RUN_NUMBER))
+          echo "beta_version=${VERSION%.*}.$BETA_PATCH" >> "$GITHUB_OUTPUT"
 
   build:
     name: Build (${{ matrix.name }})
@@ -154,6 +163,10 @@ jobs:
           workspaces: src-tauri
           shared-key: beta-${{ matrix.name }}
 
+      - name: Stamp the beta version
+        shell: bash
+        run: ./scripts/stamp-beta-version.sh "${{ needs.prepare.outputs.beta_version }}"
+
       - uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -171,14 +184,16 @@ jobs:
           # createUpdaterArtifacts is on in tauri.conf.json; the action
           # uploads latest.json plus every .sig to the pre-release.
           uploadUpdaterJson: true
-          # Beta builds carry X.Y.Z-beta.<run> and point the updater at
-          # the beta release's latest.json. The stable endpoints live in
-          # tauri.conf.json; this override replaces them for the beta
-          # channel, so beta installers update from beta and stable
+          # The beta version is stamped into Cargo.toml, Cargo.lock and
+          # tauri.conf.json by the step above, so the compiled app and the
+          # published artifact report the same version and the updater
+          # offers the next beta. This override only points the updater at
+          # the beta release's latest.json: the stable endpoints live in
+          # tauri.conf.json, so beta installers update from beta and stable
           # installers never see a beta build.
           args: >-
             ${{ matrix.args }}
-            --config '{"version":"${{ needs.prepare.outputs.beta_version }}","plugins":{"updater":{"endpoints":["https://github.com/persea-grove/persea-desktop/releases/download/beta/latest.json"]}}}'
+            --config '{"plugins":{"updater":{"endpoints":["https://github.com/persea-grove/persea-desktop/releases/download/beta/latest.json"]}}}'
 
       - name: Smoke (app launches, window opens)
         run: ${{ matrix.smoke }}

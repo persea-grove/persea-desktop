@@ -99,9 +99,11 @@ pairing survive.
 Two channels exist:
 
 - **Stable**: the Releases page. Version numbers like `1.0.0`.
-- **Beta**: the beta pre-release, versioned `1.0.0-beta.<run number>`,
-  downloadable from the same page. The beta release is rebuilt
-  frequently and its download links are only valid between builds.
+- **Beta**: the beta pre-release, versioned with a plain number counted
+  up from the release line (a `1.0.0` release with run number 42
+  produces `1.0.42`), downloadable from the same page. The beta release
+  is rebuilt frequently and its download links are only valid between
+  builds.
 
 Installing a beta moves you to the beta channel: beta installs update
 from the beta channel through the updater. Leaving the beta channel

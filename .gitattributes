@@ -1,0 +1,3 @@
+# Keep shell scripts LF so they run under /bin/sh on the Windows build leg,
+# where git would otherwise check them out with CRLF.
+*.sh text eol=lf

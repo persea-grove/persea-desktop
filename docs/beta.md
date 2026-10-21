@@ -14,7 +14,9 @@ The `Beta Desktop` workflow (`.github/workflows/beta.yml`) is dispatch-only, lik
 
 If a leg fails, the run leaves only a draft: beta testers never see a broken build, but the previous beta is gone until a successful rerun. Dispatchers should check the run result before telling testers to grab the new build.
 
-Beta builds are versioned `X.Y.Z-beta.<run number>` (for example `1.0.0-beta.42`), derived from the `tauri.conf.json` version at prepare time, so the updater sorts them correctly within the beta channel.
+Beta builds are versioned with plain numbers counted up from the release line: the `tauri.conf.json` version at prepare time, with the patch number increased by the workflow run number (a `1.1.2` release with run number 4 produces `1.1.6`).
+
+A semver pre-release suffix such as `1.1.2-beta.4` is not usable. The AppImage bundler rejects a hyphen in the version outright, and the MSI bundler rejects non-numeric pre-release or build metadata, so only a plain numeric version bundles on every platform. The number is also written into the crate and the config, not just passed to the bundler, so the compiled app reports the same version as the published artifact. That is what lets the updater offer the next beta instead of either re-offering the build that is already installed or never seeing the next one.
 
 ## Becoming a beta tester
 
@@ -33,4 +35,4 @@ While the updater is wired, beta installs update automatically from the beta cha
 
 ## Updater endpoints
 
-The beta workflow passes the beta endpoint as a build-time `--config` override. The stable endpoints live in `tauri.conf.json`. Both channels are signed with the same minisign keypair: the public key is committed in `tauri.conf.json` (`plugins.updater.pubkey`), the private key lives only in the `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` repository secrets; see [release.md](release.md) for key management and rotation.
+The beta workflow passes the beta endpoint as a build-time `--config` override. The stable endpoints live in `tauri.conf.json`. The version itself is not passed that way: the build stamps it into `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock` and `src-tauri/tauri.conf.json` with `scripts/stamp-beta-version.sh`, so the compiled app and the published artifact report the same number. Both channels are signed with the same minisign keypair: the public key is committed in `tauri.conf.json` (`plugins.updater.pubkey`), the private key lives only in the `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` repository secrets; see [release.md](release.md) for key management and rotation.

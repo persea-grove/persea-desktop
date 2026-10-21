@@ -100,15 +100,25 @@ fi
 
 # Edit via temp files next to the targets, then move over them. The checks
 # after each sed verify that only the version line changed.
+#
+# The inputs are normalised to LF first. On the Windows build leg the
+# checkout is CRLF and sed reads the file in text mode, so a rewrite of the
+# raw file would come out with LF endings and a raw diff would report every
+# line as changed instead of the single version line.
 TMP_CONF=$CONF.tmp-stamp
 TMP_TOML=$CARGO_TOML.tmp-stamp
-trap 'rm -f "$TMP_CONF" "$TMP_TOML"' EXIT INT TERM
+CONF_NORM=$CONF.tmp-norm
+TOML_NORM=$CARGO_TOML.tmp-norm
+trap 'rm -f "$TMP_CONF" "$TMP_TOML" "$CONF_NORM" "$TOML_NORM"' EXIT INT TERM
 
-sed "s/\"version\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"version\": \"$NEW_VERSION\"/" "$CONF" > "$TMP_CONF"
-sed "s/^version[[:space:]]*=[[:space:]]*\"[^\"]*\"/version = \"$NEW_VERSION\"/" "$CARGO_TOML" > "$TMP_TOML"
+tr -d '\r' < "$CONF" > "$CONF_NORM"
+tr -d '\r' < "$CARGO_TOML" > "$TOML_NORM"
 
-CONF_DIFF=$(diff "$CONF" "$TMP_CONF" | grep -c '^[<>]' || true)
-TOML_DIFF=$(diff "$CARGO_TOML" "$TMP_TOML" | grep -c '^[<>]' || true)
+sed "s/\"version\"[[:space:]]*:[[:space:]]*\"[^\"]*\"/\"version\": \"$NEW_VERSION\"/" "$CONF_NORM" > "$TMP_CONF"
+sed "s/^version[[:space:]]*=[[:space:]]*\"[^\"]*\"/version = \"$NEW_VERSION\"/" "$TOML_NORM" > "$TMP_TOML"
+
+CONF_DIFF=$(diff "$CONF_NORM" "$TMP_CONF" | grep -c '^[<>]' || true)
+TOML_DIFF=$(diff "$TOML_NORM" "$TMP_TOML" | grep -c '^[<>]' || true)
 [ "$CONF_DIFF" -eq 2 ] || {
     echo "error: tauri.conf.json rewrite changed more than the version" >&2
     exit 1
